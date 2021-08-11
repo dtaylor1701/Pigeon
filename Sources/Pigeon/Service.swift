@@ -18,20 +18,16 @@ open class Service {
         self.relativePath = relativePath
     }
 
-    public func test() async {
-        print("test")
-    }
-
     // MARK: - Performs request using service session.
-    public func request(_ method: HTTPMethod,
-                        url: URL,
-                        headers: [HTTPHeader],
-                        body: Data?) async throws -> Data? {
-        print("~~~" + url.absoluteString)
+
+    public func request<Body: Encodable>(_ method: HTTPMethod,
+                                         url: URL,
+                                         headers: [HTTPHeader],
+                                         body: Body?) async throws -> ResponseData {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.httpBody = body
         request.add(headers: headers)
+        request.httpBody = try encodeBody(body)
 
         let (data, response) = try await session.data(for: request)
 
@@ -39,17 +35,40 @@ open class Service {
             throw URLError(.badServerResponse)
         }
 
+        let responseData = ResponseData(response: httpResponse, data: data)
+
         guard httpResponse.statusCode < 300 else {
-            throw ServiceError.responseError(code: httpResponse.statusCode, body: data)
+            throw ServiceError.responseError(responseData)
         }
 
-        return data
+        return responseData
     }
 
     public func request(_ method: HTTPMethod,
-                        components: URLComponents,
-                        headers: [HTTPHeader],
-                        body: Data?) async throws -> Data? {
+                        url: URL,
+                        headers: [HTTPHeader]) async throws -> ResponseData {
+        try await request(method, url: url, headers: headers, body: Data?.none)
+    }
+
+    public func request<Body: Encodable,
+                        ResponseContent: Decodable>(_ method: HTTPMethod,
+                                                    url: URL,
+                                                    headers: [HTTPHeader],
+                                                    body: Body?) async throws -> ResponseContent {
+        let responseData = try await request(method, url: url, headers: headers, body: body)
+        return try decoder.decode(ResponseContent.self, from: responseData.data)
+    }
+
+    public func request<ResponseContent: Decodable>(_ method: HTTPMethod,
+                                                    url: URL,
+                                                    headers: [HTTPHeader]) async throws -> ResponseContent {
+        try await request(method, url: url, headers: headers, body: Data?.none)
+    }
+
+    public func request<Body: Encodable>(_ method: HTTPMethod,
+                                         components: URLComponents,
+                                         headers: [HTTPHeader],
+                                         body: Body? = nil) async throws -> ResponseData {
         guard let url = components.url else {
             throw ServiceError.invalidURL
         }
@@ -57,46 +76,63 @@ open class Service {
         return try await request(method, url: url, headers: headers, body: body)
     }
 
-    // MARK: - Uses service state.
+    public func request<Body: Encodable,
+                        ResponseContent: Decodable>(_ method: HTTPMethod,
+                                                    components: URLComponents,
+                                                    headers: [HTTPHeader],
+                                                    body: Body?) async throws -> ResponseContent {
+        guard let url = components.url else {
+            throw ServiceError.invalidURL
+        }
+
+        return try await request(method, url: url, headers: headers, body: body)
+    }
+
     public func request(_ method: HTTPMethod,
-                        path: URLPath,
-                        queryItems: [URLQueryItem]? = nil,
-                        body: Data? = nil) async throws -> Data? {
+                        components: URLComponents,
+                        headers: [HTTPHeader]) async throws -> ResponseData {
+        try await request(method, components: components, headers: headers, body: Data?.none)
+    }
+
+    public func request<ResponseContent: Decodable>(_ method: HTTPMethod,
+                                                    components: URLComponents,
+                                                    headers: [HTTPHeader]) async throws -> ResponseContent {
+        try await request(method, components: components, headers: headers, body: Data?.none)
+    }
+
+    // MARK: - Uses service state.
+
+    public func request<Body: Encodable>(_ method: HTTPMethod,
+                                         path: URLPath,
+                                         queryItems: [URLQueryItem]? = nil,
+                                         body: Body?) async throws -> ResponseData {
         var components = self.components(path: path)
         components.queryItems = queryItems
 
         return try await request(method, components: components, headers: defaultHeaders(), body: body)
     }
 
-    public func request<Body: Encodable>(_ method: HTTPMethod,
-                                         path: URLPath,
-                                         queryItems: [URLQueryItem]? = nil,
-                                         body: Body) async throws -> Data? {
-        var components = self.components(path: path)
-        components.queryItems = queryItems
-
-        let encodedBody: Data = try encoder.encode(body)
-
-        return try await request(method, components: components, headers: defaultHeaders(), body: encodedBody)
-    }
-
-    public func request<ResponseContent: Decodable>(_ method: HTTPMethod,
-                                                    path: URLPath,
-                                                    queryItems: [URLQueryItem]? = nil,
-                                                    body: Data? = nil) async throws -> ResponseContent {
-        let data = try await request(method, path: path, queryItems: queryItems, body: body)
-        guard let data = data else { throw ServiceError.emptyResponseData }
-        return try decoder.decode(ResponseContent.self, from: data)
-    }
-
     public func request<Body: Encodable,
                         ResponseContent: Decodable>(_ method: HTTPMethod,
                                                     path: URLPath,
                                                     queryItems: [URLQueryItem]? = nil,
-                                                    body: Body) async throws -> ResponseContent {
-        let data = try await request(method, path: path, queryItems: queryItems, body: body)
-        guard let data = data else { throw ServiceError.emptyResponseData }
-        return try decoder.decode(ResponseContent.self, from: data)
+                                                    body: Body?) async throws -> ResponseContent {
+        var components = self.components(path: path)
+        components.queryItems = queryItems
+
+        return try await request(method, components: components, headers: defaultHeaders(), body: body)
+    }
+
+    public func request(_ method: HTTPMethod,
+                        path: URLPath,
+                        queryItems: [URLQueryItem]? = nil) async throws -> ResponseData {
+        try await request(method, path: path, queryItems: queryItems, body: Data?.none)
+    }
+
+    public func request<ResponseContent: Decodable>(_ method: HTTPMethod,
+                                                    path: URLPath,
+                                                    queryItems: [URLQueryItem]? = nil) async throws -> ResponseContent {
+        try await request(method, path: path, queryItems: queryItems, body: Data?.none)
     }
 
     open func defaultHeaders() -> [HTTPHeader] {
@@ -111,6 +147,12 @@ open class Service {
         }
 
         return headers
+    }
+
+    private func encodeBody<Body: Encodable>(_ body: Body?) throws -> Data? {
+        guard let body = body else { return nil }
+        if let data = body as? Data { return data }
+        return try encoder.encode(body)
     }
 
     private func components(path: URLPath) -> URLComponents {
