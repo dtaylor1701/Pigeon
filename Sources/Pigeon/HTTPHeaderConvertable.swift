@@ -1,3 +1,3 @@
 public protocol HTTPHeaderConvertable {
-    func asHTTPHeader() -> HTTPHeader?
+  func asHTTPHeader() -> HTTPHeader?
 }
