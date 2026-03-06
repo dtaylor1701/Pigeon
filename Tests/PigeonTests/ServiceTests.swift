@@ -1,52 +1,54 @@
-import XCTest
+import Testing
+import Foundation
 @testable import Pigeon
 
-final class ServiceTests: XCTestCase {
-    var service: Service!
+@Suite("Service Tests")
+struct ServiceTests {
+    let service: Service
 
-    override func setUpWithError() throws {
+    init() {
         service = Service(host: "pokeapi.co", relativePath: ["api", "v2"])
     }
 
-    func testRequestWithURL() async throws {
-        let url = try XCTUnwrap(URL(string: "https://pokeapi.co/api/v2/pokemon/charmander"))
+    @Test func requestWithURL() async throws {
+        let url = try #require(URL(string: "https://pokeapi.co/api/v2/pokemon/charmander"))
         let data = try await service.request(.get,
                                              url: url,
                                              headers: [])
-        XCTAssertNotNil(data)
+        #expect(data != nil)
     }
 
-    func testRequestWithPath() async throws {
+    @Test func requestWithPath() async throws {
         let data = try await service.request(.get,
                                              path: ["pokemon", "charmander"])
-        XCTAssertNotNil(data)
+        #expect(data != nil)
     }
 
-    func testRequestTypedResponse() async throws {
+    @Test func requestTypedResponse() async throws {
         service.decoder.keyDecodingStrategy = .convertFromSnakeCase
         let charmander: Pokemon = try await service.request(.get,
                                                             path: ["pokemon", "charmander"])
-        XCTAssertEqual(charmander.name, "charmander")
+        #expect(charmander.name == "charmander")
     }
 
-    func testPostWithBodyData() async throws {
+    @Test func postWithBodyData() async throws {
         let user = User(name: "Test user", job: "dog walker")
         let data = try JSONEncoder().encode(user)
 
-        service = Service(host: "reqres.in", relativePath: "api")
+        let reqresService = Service(host: "reqres.in", relativePath: "api")
 
-        let response = try await service.request(.post, path: "users", body: data)
+        let response = try await reqresService.request(.post, path: "users", body: data)
 
-        XCTAssertNotNil(response)
+        #expect(response != nil)
     }
 
-    func testPostWithTypedBody() async throws {
+    @Test func postWithTypedBody() async throws {
         let user = User(name: "Test user", job: "dog walker")
 
-        service = Service(host: "reqres.in", relativePath: "api")
+        let reqresService = Service(host: "reqres.in", relativePath: "api")
 
-        let responseUser: User = try await service.request(.post, path: "users", body: user)
+        let responseUser: User = try await reqresService.request(.post, path: "users", body: user)
 
-        XCTAssertEqual(responseUser.name, "Test user")
+        #expect(responseUser.name == "Test user")
     }
 }
