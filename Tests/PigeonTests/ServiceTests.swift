@@ -12,16 +12,14 @@ struct ServiceTests {
 
     @Test func requestWithURL() async throws {
         let url = try #require(URL(string: "https://pokeapi.co/api/v2/pokemon/charmander"))
-        let data = try await service.request(.get,
+        _ = try await service.request(.get,
                                              url: url,
                                              headers: [])
-        #expect(data != nil)
     }
 
     @Test func requestWithPath() async throws {
-        let data = try await service.request(.get,
+        _ = try await service.request(.get,
                                              path: ["pokemon", "charmander"])
-        #expect(data != nil)
     }
 
     @Test func requestTypedResponse() async throws {
@@ -37,9 +35,7 @@ struct ServiceTests {
 
         let reqresService = Service(host: "reqres.in", relativePath: "api")
 
-        let response = try await reqresService.request(.post, path: "users", body: data)
-
-        #expect(response != nil)
+        _ = try await reqresService.request(.post, path: "users", body: data)
     }
 
     @Test func postWithTypedBody() async throws {
