@@ -11,6 +11,7 @@ open class Service {
   public var scheme: HTTPScheme = .https
   public var authorization: HTTPAuthorization?
   public var contentType: HTTPContentType? = .json
+  public var userAgent: String?
 
   public var session = URLSession(configuration: .default)
   public var encoder = JSONEncoder()
@@ -177,6 +178,10 @@ open class Service {
 
     if let authorizationHeader = self.authorization?.asHTTPHeader() {
       headers.append(authorizationHeader)
+    }
+
+    if let userAgent = self.userAgent {
+      headers.append(HTTPHeader(field: .userAgent, value: userAgent))
     }
 
     return headers

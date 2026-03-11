@@ -33,18 +33,24 @@ struct ServiceTests {
         let user = User(name: "Test user", job: "dog walker")
         let data = try JSONEncoder().encode(user)
 
-        let reqresService = Service(host: "reqres.in", relativePath: "api")
+        let service = Service(host: "httpbin.org")
+        service.userAgent = "PigeonTests"
 
-        _ = try await reqresService.request(.post, path: "users", body: data)
+        _ = try await service.request(.post, path: "post", body: data)
     }
 
     @Test func postWithTypedBody() async throws {
         let user = User(name: "Test user", job: "dog walker")
 
-        let reqresService = Service(host: "reqres.in", relativePath: "api")
+        let service = Service(host: "httpbin.org")
+        service.userAgent = "PigeonTests"
 
-        let responseUser: User = try await reqresService.request(.post, path: "users", body: user)
+        struct HttpBinResponse: Decodable {
+            let json: User
+        }
 
-        #expect(responseUser.name == "Test user")
+        let response: HttpBinResponse = try await service.request(.post, path: "post", body: user)
+
+        #expect(response.json.name == "Test user")
     }
 }
