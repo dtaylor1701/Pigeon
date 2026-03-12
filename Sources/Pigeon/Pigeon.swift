@@ -4,7 +4,7 @@ import Foundation
   import FoundationNetworking
 #endif
 
-open class Service {
+open class Pigeon {
   public var host: String
   public var relativePath: URLPath
   public var port: Int?
@@ -44,7 +44,7 @@ open class Service {
     let responseData = ResponseData(response: httpResponse, data: data)
 
     guard httpResponse.statusCode < 300 else {
-      throw ServiceError.responseError(responseData)
+      throw PigeonError.responseError(responseData)
     }
 
     return responseData
@@ -86,7 +86,7 @@ open class Service {
     body: Body? = nil
   ) async throws -> ResponseData {
     guard let url = components.url else {
-      throw ServiceError.invalidURL
+      throw PigeonError.invalidURL
     }
 
     return try await request(method, url: url, headers: headers, body: body)
@@ -102,7 +102,7 @@ open class Service {
     body: Body?
   ) async throws -> ResponseContent {
     guard let url = components.url else {
-      throw ServiceError.invalidURL
+      throw PigeonError.invalidURL
     }
 
     return try await request(method, url: url, headers: headers, body: body)

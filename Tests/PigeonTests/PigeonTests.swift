@@ -2,29 +2,29 @@ import Testing
 import Foundation
 @testable import Pigeon
 
-@Suite("Service Tests")
-struct ServiceTests {
-    let service: Service
+@Suite("Pigeon Tests")
+struct PigeonTests {
+    let pigeon: Pigeon
 
     init() {
-        service = Service(host: "pokeapi.co", relativePath: ["api", "v2"])
+        pigeon = Pigeon(host: "pokeapi.co", relativePath: ["api", "v2"])
     }
 
     @Test func requestWithURL() async throws {
         let url = try #require(URL(string: "https://pokeapi.co/api/v2/pokemon/charmander"))
-        _ = try await service.request(.get,
+        _ = try await pigeon.request(.get,
                                              url: url,
                                              headers: [])
     }
 
     @Test func requestWithPath() async throws {
-        _ = try await service.request(.get,
+        _ = try await pigeon.request(.get,
                                              path: ["pokemon", "charmander"])
     }
 
     @Test func requestTypedResponse() async throws {
-        service.decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let charmander: Pokemon = try await service.request(.get,
+        pigeon.decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let charmander: Pokemon = try await pigeon.request(.get,
                                                             path: ["pokemon", "charmander"])
         #expect(charmander.name == "charmander")
     }
@@ -33,23 +33,23 @@ struct ServiceTests {
         let user = User(name: "Test user", job: "dog walker")
         let data = try JSONEncoder().encode(user)
 
-        let service = Service(host: "httpbin.org")
-        service.userAgent = "PigeonTests"
+        let pigeon = Pigeon(host: "httpbin.org")
+        pigeon.userAgent = "PigeonTests"
 
-        _ = try await service.request(.post, path: "post", body: data)
+        _ = try await pigeon.request(.post, path: "post", body: data)
     }
 
     @Test func postWithTypedBody() async throws {
         let user = User(name: "Test user", job: "dog walker")
 
-        let service = Service(host: "httpbin.org")
-        service.userAgent = "PigeonTests"
+        let pigeon = Pigeon(host: "httpbin.org")
+        pigeon.userAgent = "PigeonTests"
 
         struct HttpBinResponse: Decodable {
             let json: User
         }
 
-        let response: HttpBinResponse = try await service.request(.post, path: "post", body: user)
+        let response: HttpBinResponse = try await pigeon.request(.post, path: "post", body: user)
 
         #expect(response.json.name == "Test user")
     }

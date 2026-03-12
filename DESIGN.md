@@ -4,7 +4,7 @@ Pigeon is a lightweight, type-safe networking library for Swift, designed to sim
 
 ## 1. High-Level Architecture
 
-Pigeon follows a **Service-Oriented Architecture** for networking. The core component is the `Service` class, which acts as a central hub for configuring and executing network requests. It abstracts away the boilerplate of URL construction, header management, and data encoding/decoding.
+Pigeon follows a **Pigeon-Oriented Architecture** for networking. The core component is the `Pigeon` class, which acts as a central hub for configuring and executing network requests. It abstracts away the boilerplate of URL construction, header management, and data encoding/decoding.
 
 ### Technical Stack
 - **Language:** Swift 5.5+
@@ -17,7 +17,7 @@ Pigeon follows a **Service-Oriented Architecture** for networking. The core comp
 ## 2. Core Design Philosophies & Patterns
 
 - **Type Safety:** HTTP methods, schemes, content types, and paths are represented by strongly-typed enums and structs to prevent runtime errors.
-- **Composition over Inheritance:** Services are designed to be configured and extended, allowing for easy dependency injection and modularity.
+- **Composition over Inheritance:** Pigeons are designed to be configured and extended, allowing for easy dependency injection and modularity.
 - **Convention over Configuration:** Sensible defaults (like JSON encoding/decoding) are provided, while still allowing full customization of `URLSessionConfiguration`, `JSONEncoder`, and `JSONDecoder`.
 - **Cross-Platform:** Support for both Apple platforms (via `Foundation`) and Linux (via `FoundationNetworking`).
 
@@ -25,7 +25,7 @@ Pigeon follows a **Service-Oriented Architecture** for networking. The core comp
 
 ## 3. Key Components
 
-### 3.1. `Service`
+### 3.1. `Pigeon`
 The primary interface for executing requests. It maintains state such as:
 - `host` and `port`
 - `scheme` (HTTP/HTTPS)
@@ -51,7 +51,7 @@ A container for the `HTTPURLResponse` and the raw `Data` returned from a request
 ## 4. Technical Specifications
 
 ### 4.1. Error Handling
-Pigeon uses a centralized `ServiceError` enum:
+Pigeon uses a centralized `PigeonError` enum:
 - `.invalidURL`: Thrown when URL components cannot form a valid URL.
 - `.responseError(response:body:)`: Thrown for non-2xx status codes, capturing both the response metadata and the error body for debugging.
 
@@ -66,7 +66,7 @@ Pigeon does not implement its own persistence layer. It is designed to be the ne
 ## 5. Interactions & API Design
 
 ### Request Flow
-1. **Configuration:** Initialize a `Service` with a host and base path.
+1. **Configuration:** Initialize a `Pigeon` with a host and base path.
 2. **Path Construction:** Use `URLPath` to define the endpoint.
 3. **Execution:** Call `request(_:path:queryItems:body:)`.
 4. **Processing:**

@@ -27,12 +27,12 @@ Or add it via Xcode's Swift Package Manager integration.
 
 ### Basic Setup
 
-Initialize a `Service` with your API's host and a base path:
+Initialize a `Pigeon` with your API's host and a base path:
 
 ```swift
 import Pigeon
 
-let apiService = Service(host: "api.example.com", relativePath: ["v1"])
+let apiPigeon = Pigeon(host: "api.example.com", relativePath: ["v1"])
 ```
 
 ### Making a GET Request
@@ -40,7 +40,7 @@ let apiService = Service(host: "api.example.com", relativePath: ["v1"])
 Perform a simple request and receive a typed response:
 
 ```swift
-let pokemon: Pokemon = try await apiService.request(.get, path: ["pokemon", "charmander"])
+let pokemon: Pokemon = try await apiPigeon.request(.get, path: ["pokemon", "charmander"])
 print(pokemon.name)
 ```
 
@@ -50,7 +50,7 @@ Send a model as the request body:
 
 ```swift
 let newUser = User(name: "Ash Ketchum", job: "Trainer")
-let responseUser: User = try await apiService.request(.post, path: "users", body: newUser)
+let responseUser: User = try await apiPigeon.request(.post, path: "users", body: newUser)
 ```
 
 ### Authentication
@@ -58,9 +58,9 @@ let responseUser: User = try await apiService.request(.post, path: "users", body
 Configure global authorization for your service:
 
 ```swift
-apiService.authorization = .bearer(token: "your_api_token")
+apiPigeon.authorization = .bearer(token: "your_api_token")
 // Or for Basic Auth:
-// apiService.authorization = .basic(username: "user", password: "pass")
+// apiPigeon.authorization = .basic(username: "user", password: "pass")
 ```
 
 ### Custom Configuration
@@ -68,13 +68,13 @@ apiService.authorization = .bearer(token: "your_api_token")
 You can customize the underlying `URLSession`, `JSONEncoder`, or `JSONDecoder`:
 
 ```swift
-apiService.decoder.keyDecodingStrategy = .convertFromSnakeCase
-apiService.session = URLSession(configuration: .ephemeral)
+apiPigeon.decoder.keyDecodingStrategy = .convertFromSnakeCase
+apiPigeon.session = URLSession(configuration: .ephemeral)
 ```
 
 ## Core Components
 
-- **`Service`**: The primary class for configuring your API and performing requests.
+- **`Pigeon`**: The primary class for configuring your API and performing requests.
 - **`URLPath`**: A flexible type for representing URL paths, supporting array and string literals.
 - **`HTTPAuthorization`**: An enum for common authorization headers (`.basic`, `.bearer`, `.other`).
 - **`HTTPMethod`**: Standard HTTP verbs (`.get`, `.post`, `.put`, `.delete`, etc.).
